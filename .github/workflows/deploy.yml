@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo (for reference only)
+      # 1️⃣ Checkout repo (reference only)
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -26,18 +26,18 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            
+
             set -e
 
             cd ~/apps/node_backend
 
-            # 🔒 Force sync with GitHub
+            # 🔒 Force sync with GitHub (EC2 is read-only)
             git fetch origin
             git checkout main || git checkout -b main origin/main
             git reset --hard origin/main
 
-            # 🛑 Stop old container if running
-            if docker ps -a --format '{{.Names}}' | grep -q node-backend; then
+            # 🛑 Stop & remove old container (if exists)
+            if docker ps -a --format '{{.Names}}' | grep -q '^node-backend$'; then
               docker stop node-backend
               docker rm node-backend
             fi
@@ -45,9 +45,10 @@ jobs:
             # 🐳 Build new Docker image
             docker build -t node-backend .
 
-            # 🚀 Run container
+            # 🚀 Run container with restart policy
             docker run -d \
               --name node-backend \
+              --restart unless-stopped \
               -p 3000:3000 \
               node-backend
 
