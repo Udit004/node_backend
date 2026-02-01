@@ -38,12 +38,11 @@ jobs:
             # 📦 Install dependencies
             npm install --production
 
-            # 🚀 Start or reload app safely
-            pm2 describe node-backend > /dev/null
-            if [ $? -ne 0 ]; then
-              pm2 start ecosystem.config.cjs
-            else
+            # 🚀 Start or reload app safely (set -e compatible)
+            if pm2 describe node-backend > /dev/null; then
               pm2 reload node-backend
+            else
+              pm2 start ecosystem.config.cjs
             fi
 
             pm2 save
