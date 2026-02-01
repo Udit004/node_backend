@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout latest code from GitHub
+      # 1️⃣ Checkout latest code from GitHub (for reference only)
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -21,14 +21,23 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      # 3️⃣ Deploy to EC2 (SSH + PM2 restart)
+      # 3️⃣ Deploy to EC2 (FORCE SYNC + PM2 restart)
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no \
               ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
+
             cd ~/apps/node_backend
-            git pull origin main
+
+            # 🔒 Force EC2 to exactly match GitHub main
+            git fetch origin
+            git checkout main || git checkout -b main origin/main
+            git reset --hard origin/main
+
+            # 📦 Install dependencies
             npm install --production
+
+            # 🔁 Restart app
             pm2 restart node-backend
           EOF
