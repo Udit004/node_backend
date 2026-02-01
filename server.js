@@ -9,8 +9,8 @@ app.get("/", (req, res) => {
   res.send("Hello, Didi and Priya!");
 });
 
-app.get("/about", (req, res) => {
-  res.send("This is the about page.");
+app.get("/satyam", (req, res) => {
+  res.send("This is the Satyam page.");
 });
 
 app.listen(PORT, "0.0.0.0", () => {
