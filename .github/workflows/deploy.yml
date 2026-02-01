@@ -1,4 +1,4 @@
-name: Deploy Node Backend to EC2
+name: Deploy Node Backend (Docker)
 
 on:
   push:
@@ -10,40 +10,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout latest code from GitHub (for reference only)
+      # 1️⃣ Checkout repo (for reference only)
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup SSH authentication
+      # 2️⃣ Setup SSH
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-      # 3️⃣ Deploy to EC2 (FORCE SYNC + PM2 restart)
-      - name: Deploy to EC2
+      # 3️⃣ Deploy using Docker on EC2
+      - name: Deploy to EC2 (Docker)
         run: |
           ssh -o StrictHostKeyChecking=no \
-              ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            
             set -e
 
             cd ~/apps/node_backend
 
-            # 🔒 Force EC2 to exactly match GitHub main
+            # 🔒 Force sync with GitHub
             git fetch origin
             git checkout main || git checkout -b main origin/main
             git reset --hard origin/main
 
-            # 📦 Install dependencies
-            npm install --production
-
-            # 🚀 Start or reload app safely (set -e compatible)
-            if pm2 describe node-backend > /dev/null; then
-              pm2 reload node-backend
-            else
-              pm2 start ecosystem.config.cjs
+            # 🛑 Stop old container if running
+            if docker ps -a --format '{{.Names}}' | grep -q node-backend; then
+              docker stop node-backend
+              docker rm node-backend
             fi
 
-            pm2 save
+            # 🐳 Build new Docker image
+            docker build -t node-backend .
+
+            # 🚀 Run container
+            docker run -d \
+              --name node-backend \
+              -p 3000:3000 \
+              node-backend
+
           EOF
