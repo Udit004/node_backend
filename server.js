@@ -26,9 +26,13 @@ app.get("/", (req, res) => {
   res.send("Hello, Didi and Priya from your brother! How are you? Hope you are doing well.");
 });
 
-app.get("/udit", (req, res) => {
-  res.send("This is the Udit page.");
+app.get("/priya", (req, res) => {
+  res.send("This is the Priya page.");
 });
+
+app.get("/didi", (req, res) => {
+  res.send("This is the Didi page.");
+}
 
 
 
