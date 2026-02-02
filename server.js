@@ -1,4 +1,11 @@
+import 'dotenv/config';
 import express from "express";
+import mongoose from "mongoose";
+
+const DB_URL = process.env.DB_URL;
+
+await mongoose.connect(DB_URL);
+
 
 const app = express();
 
