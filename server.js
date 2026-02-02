@@ -26,13 +26,11 @@ app.get("/", (req, res) => {
   res.send("Hello, Didi and Priya from your brother! How are you? Hope you are doing well.");
 });
 
-app.get("/satyam", (req, res) => {
-  res.send("This is the Satyam page.");
+app.get("/udit", (req, res) => {
+  res.send("This is the Udit page.");
 });
 
-app.get("/priya", (req, res) => {
-  res.send("This is the Priya page.");
-});
+
 
 // Route to create a message (POST)
 app.post("/message", async (req, res) => {
