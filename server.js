@@ -23,7 +23,7 @@ const Message = mongoose.model('Message', messageSchema);
 const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("hello world. Didi!");
+  res.send("hello Didi & priya! This is the home page.");
 });
 
 app.get("/didi", (req, res) => {
