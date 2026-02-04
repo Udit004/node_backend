@@ -1,4 +1,4 @@
-name: Image-based CI/CD (Docker + EC2)
+name: Image-based CI/CD (Tagged + Rollback-ready)
 
 on:
   push:
@@ -21,23 +21,29 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3️⃣ Build & push Docker image
+      # 3️⃣ Extract short commit SHA
+      - name: Set image tag
+        id: vars
+        run: echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      # 4️⃣ Build & push image with tag
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/node-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }}
 
-      # 4️⃣ Deploy on EC2
+      # 5️⃣ Deploy to EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/infra
+            export IMAGE_TAG=${{ steps.vars.outputs.TAG }}
             docker compose pull
             docker compose up -d
