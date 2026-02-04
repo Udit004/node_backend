@@ -30,6 +30,10 @@ app.get("/didi", (req, res) => {
   res.send("This is the Didi page.");
 });
 
+app.get("/priya", (req, res) => {
+  res.send("This is the Priya page.");
+});
+
 
 
 // Route to create a message (POST)
