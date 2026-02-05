@@ -44,6 +44,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/infra
-            export IMAGE_TAG=${{ steps.vars.outputs.TAG }}
-            docker compose pull
-            docker compose up -d
+            ./deploy.sh ${{ steps.vars.outputs.TAG }}
+
