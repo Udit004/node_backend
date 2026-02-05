@@ -1,13 +1,13 @@
-FROM node:20-alpine
+    FROM node:20-alpine
 
-RUN apk add --no-cache curl
+    RUN apk add --no-cache curl
 
-WORKDIR /app
+    WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci --only=production
+    COPY package*.json ./
+    RUN npm ci --only=production
 
-COPY . .
+    COPY . .
 
-EXPOSE 3000
-CMD ["node", "index.js"]
+    EXPOSE 3000
+    CMD ["node", "server.js"]
