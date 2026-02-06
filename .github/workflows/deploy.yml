@@ -55,7 +55,12 @@ jobs:
           script: |
             set -e
 
-            sed "s|__IMAGE__|${{ steps.digest.outputs.DIGEST }}|g" k8s/api/deployment.yaml > /tmp/deployment.yaml
+            TS=$(date +%s)
+
+            sed \
+              -e "s|__IMAGE__|${{ steps.digest.outputs.DIGEST }}|g" \
+              -e "s|__DEPLOY_TS__|$TS|g" \
+              k8s/api/deployment.yaml > /tmp/deployment.yaml
 
             kubectl apply -f /tmp/deployment.yaml
 
