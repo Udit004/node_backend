@@ -61,29 +61,8 @@ app.get("/messages", async (req, res) => {
   }
 });
 
-app.get("/health", async (req, res) => {
-  try {
-    // Check MongoDB connection state
-    const mongoState = mongoose.connection.readyState;
-
-    if (mongoState !== 1) {
-      return res.status(503).json({
-        status: "unhealthy",
-        database: "disconnected",
-      });
-    }
-
-    res.status(200).json({
-      status: "healthy",
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    res.status(503).json({
-      status: "unhealthy",
-      error: err.message,
-    });
-  }
+app.get("/health", (req, res) => {
+  res.status(200).send("ok");
 });
 
 
