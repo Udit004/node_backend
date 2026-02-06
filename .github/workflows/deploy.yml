@@ -43,8 +43,10 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            kubectl set image deployment/api \
-              api=${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }} \
-              -n api
+            set -e
 
-            kubectl rollout status deployment/api -n api
+            kubectl set image deployment/api \
+            api=${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }} \
+            -n api
+
+            kubectl rollout status deployment/api -n api --timeout=120s
