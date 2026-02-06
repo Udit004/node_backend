@@ -55,8 +55,8 @@ jobs:
           script: |
             set -e
 
-            kubectl set image deployment/api \
-              api=${{ steps.digest.outputs.DIGEST }} \
-              -n api
+            sed "s|__IMAGE__|${{ steps.digest.outputs.DIGEST }}|g" k8s/api/deployment.yaml > /tmp/deployment.yaml
+
+            kubectl apply -f /tmp/deployment.yaml
 
             kubectl rollout status deployment/api -n api --timeout=180s
