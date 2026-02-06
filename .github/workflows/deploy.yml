@@ -1,4 +1,4 @@
-name: Image-based CI/CD (K8s-aware, Rollback-ready)
+name: Image-based CI/CD (K8s-aware, Rollout-safe)
 
 on:
   push:
@@ -21,13 +21,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3️⃣ Extract short commit SHA
+      # 3️⃣ Extract short commit SHA (tag is only for traceability)
       - name: Set image tag
         id: vars
         run: echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       # 4️⃣ Build & push image
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -35,7 +36,16 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }}
 
-      # 5️⃣ Deploy to Kubernetes (NOT Docker)
+      # 5️⃣ Resolve immutable image digest
+      - name: Resolve image digest
+        id: digest
+        run: |
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' \
+            ${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }})
+          echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
+          echo "Deploying image digest: $DIGEST"
+
+      # 6️⃣ Deploy to Kubernetes (digest-based)
       - name: Deploy to Kubernetes on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -46,7 +56,7 @@ jobs:
             set -e
 
             kubectl set image deployment/api \
-            api=${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }} \
-            -n api
+              api=${{ steps.digest.outputs.DIGEST }} \
+              -n api
 
-            kubectl rollout status deployment/api -n api --timeout=120s
+            kubectl rollout status deployment/api -n api --timeout=180s
