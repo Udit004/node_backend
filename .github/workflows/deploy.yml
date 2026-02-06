@@ -1,4 +1,4 @@
-name: Image-based CI/CD (Tagged + Rollback-ready)
+name: Image-based CI/CD (K8s-aware, Rollback-ready)
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
         id: vars
         run: echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      # 4️⃣ Build & push image with tag
+      # 4️⃣ Build & push image
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -35,14 +35,16 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }}
 
-      # 5️⃣ Deploy to EC2
-      - name: Deploy to EC2
+      # 5️⃣ Deploy to Kubernetes (NOT Docker)
+      - name: Deploy to Kubernetes on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/infra
-            ./deploy.sh ${{ steps.vars.outputs.TAG }}
+            kubectl set image deployment/api \
+              api=${{ secrets.DOCKERHUB_USERNAME }}/node-backend:${{ steps.vars.outputs.TAG }} \
+              -n api
 
+            kubectl rollout status deployment/api -n api
