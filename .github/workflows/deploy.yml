@@ -56,10 +56,9 @@ jobs:
 
             cd /home/ubuntu
 
-            echo "Updating image in deployment.yaml"
-            sed -i "s|__IMAGE__|${{ steps.digest.outputs.DIGEST }}|g" deployment.yaml
+            sed "s|__IMAGE__|${{ steps.digest.outputs.DIGEST }}|g" deployment.yaml > /tmp/deployment.yaml
 
-            kubectl apply -f deployment.yaml
+            kubectl apply -f /tmp/deployment.yaml
             kubectl apply -f service.yaml
             kubectl apply -f ingress.yaml
             kubectl apply -f configmap.yaml
