@@ -21,14 +21,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3️⃣ Extract short commit SHA (tag is only for traceability)
+      # 3️⃣ Extract short commit SHA
       - name: Set image tag
         id: vars
         run: echo "TAG=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       # 4️⃣ Build & push image
       - name: Build and push Docker image
-        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -45,7 +44,7 @@ jobs:
           echo "DIGEST=$DIGEST" >> $GITHUB_OUTPUT
           echo "Deploying image digest: $DIGEST"
 
-      # 6️⃣ Deploy to Kubernetes (digest-based)
+      # 6️⃣ Deploy to Kubernetes (EC2-local manifests)
       - name: Deploy to Kubernetes on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -55,13 +54,14 @@ jobs:
           script: |
             set -e
 
-            TS=$(date +%s)
+            cd /home/ubuntu
 
-            sed \
-              -e "s|__IMAGE__|${{ steps.digest.outputs.DIGEST }}|g" \
-              -e "s|__DEPLOY_TS__|$TS|g" \
-              k8s/api/deployment.yaml > /tmp/deployment.yaml
+            echo "Updating image in deployment.yaml"
+            sed -i "s|__IMAGE__|${{ steps.digest.outputs.DIGEST }}|g" deployment.yaml
 
-            kubectl apply -f /tmp/deployment.yaml
+            kubectl apply -f deployment.yaml
+            kubectl apply -f service.yaml
+            kubectl apply -f ingress.yaml
+            kubectl apply -f configmap.yaml
 
-            kubectl rollout status deployment/api -n api --timeout=180s
+            kubectl rollout status deployment/node-backend -n backend --timeout=180s
